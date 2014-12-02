@@ -1,7 +1,10 @@
 import xml.etree.ElementTree as etree
+import pickle
+import gzip
 
 
 def create_revision_list(xmL, topic_name):
+    print "create_revision_list called..."
 
     x = 1
 
@@ -14,15 +17,19 @@ def create_revision_list(xmL, topic_name):
             if title == topic_name:
                 for revision in elem.iter('{http://www.mediawiki.org/xml/export-0.8/}revision'):
                     num_revisions += 1
+                    if num_revisions%10 == 0:
+                        print "{} Revisions seen".format(num_revisions)
                     revisions.append(revision.find('{http://www.mediawiki.org/xml/export-0.8/}text').text)
                 print title + '-->' + str(num_revisions)
                 break
             x += 1
+            if x%10 == 0:
+                print "Document {} processed".format(x)
             elem.clear()
 
     #print 'Revisions: '
     #print revisions[1000]
-
+    pickle.dump( revisions, gzip.open( "document_revisions.p", "wb" ) )
     return revisions
 
-r = create_revision_list('enwiki-20140203-pages-meta-history3.xml-p000053871p000055000', 'The Empire Strikes Back')
+
