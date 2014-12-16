@@ -13,6 +13,7 @@ from gensim import utils, corpora, models, similarities
 import xml.etree.ElementTree as etree
 from collections import Counter
 import difflib
+import numpy as np
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
 
@@ -72,6 +73,11 @@ def distance_cosine(x, y):
     sims = index_bow[y]
     return sims[x]
 
+def eucledian_topics(x,y):
+    return np.linalg.norm(np.array(lsi[corpus_bow[x]])-np.array(lsi[corpus_bow[y]]))
+
+
+
 def distance_wdiff(x,y):
     a = revisions[x]
     b = revisions[y]
@@ -110,41 +116,48 @@ for user in set(a):                                                             
 
 i = 0
 count = 0
-
 print "number of revisions = ", len(revisions)
 print "length of bow = ",len(corpus_bow)
 for edit in corpus_bow:
-    if count %10 ==0:
-        print " {} Iterations done  ".format(count) 
-    count = count + 1
-    if i == 0:
-        next
-    # d12_bow = distance_cosine(i-1, i)
-    # d12_lsi = distance_topics(i-1, i)
-    d12_wdiff = distance_wdiff(i-1, i)
-    # Abhinav: add your two distance measures here
-    user = a[i]
-    n = 0
-    j = i+1
-    add = 0
-    while n <= K:
-        # print n
-        if a[j] == a[i]:
-            j += 1
+    try:
+        if count %10 == 0:
+            print " {} Iterations done  ".format(count) 
+        count = count + 1
+        if i == 0:
             next
-        # d2k_lsi = distance_topics(j, i)
-        # d1k_lsi = distance_topics(j, i-1)
-        d1k_wdiff = distance_wdiff(j,i-1 )
-        d2k_wdiff = distance_wdiff(j, i)
-        # q_lsi = quality(d1k_lsi, d2k_lsi, d12_lsi)
-        # q_bow = quality(d1k_bow, d2k_bow, d12_bow)
-        q_wdiff = quality(d1k_wdiff, d2k_wdiff, d12_wdiff)
-        print q_wdiff
-        n = n+1
-        j = j + 1
-        add += (1-alpha)*math.pow(alpha,((i-j)+1))*(q_wdiff * d12_wdiff * f(r_wdiff[a[j]]))
-    r_wdiff[a[i]] = r_wdiff[a[i]] + add 
-    print "Author = {}  Reputation score = {} ".format(a[i], r_wdiff[a[i]])
-    sys.exit()
+        # d12_bow = distance_cosine(i-1, i)
+        # d12_lsi = distance_topics(i-1, i)
+        d12_wdiff = distance_wdiff(i-1, i)
+
+        # Abhinav: add your two distance measures here
+        user = a[i]
+        n = 0
+        j = i+1
+        add = 0
+        while n < K:
+            # print n
+            if a[j] == a[i]:
+                j += 1
+                next
+            # d2k_lsi = distance_topics(j, i)
+            # d1k_lsi = distance_topics(j, i-1)
+            d1k_wdiff = distance_wdiff(j,i-1 )
+            d2k_wdiff = distance_wdiff(j, i)
+            # q_lsi = quality(d1k_lsi, d2k_lsi, d12_lsi)
+            # q_bow = quality(d1k_bow, d2k_bow, d12_bow)
+            q_wdiff = quality(d1k_wdiff, d2k_wdiff, d12_wdiff)
+            add += (1-alpha)*math.pow(alpha,((i-j)+1))*(q_wdiff * d12_wdiff * f(r_wdiff[a[j]]))
+            n = n+1
+            j = j + 1
+        r_wdiff[a[i]] = r_wdiff[a[i]] + add 
+        print "Author = {}  Reputation score = {} ".format(a[i], r_wdiff[a[i]])
+        i = i+1
+    except:
+        i = i+1
+        next
+
+
+pickle.dump( r_wdiff, gzip.open( "wdiff_reputation", "wb" ) )
+pickle.dump( a, gzip.open( "author.p", "wb" ) )
 
 #         # call quality formula using
