@@ -2,6 +2,7 @@ import pickle
 from collections import Counter
 import codecs
 from collections import OrderedDict
+import gzip
 
 with open('r_lsi.pik', 'rb') as pk:
     r_lsi = pickle.load(pk)
@@ -51,3 +52,4 @@ with open('r_lsi_list', 'wb') as pk:
 with open('r_bow_list', 'wb') as pk:
     pickle.dump(r_bow_list, pk)
 
+pickle.load(gzip.open( "pickle_name", "rb" ))
